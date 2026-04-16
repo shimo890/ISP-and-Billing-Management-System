@@ -4,7 +4,7 @@ A modern, premium ISP company metrics dashboard with advanced analytics, custome
 
 ## 🎯 Overview
 
-The KTL Metrics Dashboard is a full-stack web application designed specifically for ISP companies to:
+The ISP and Billing Management System is a full-stack web application designed specifically for ISP companies to:
 - Track and analyze sales revenue
 - Manage customer information and lifecycle
 - Monitor collection rates and payment status
