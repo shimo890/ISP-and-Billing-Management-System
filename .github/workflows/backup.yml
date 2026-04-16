@@ -1,0 +1,29 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Backup Database
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          password: ${{ secrets.VM_PASSWORD }}
+          script: |
+            /opt/backups/backup-database.sh
+      
+      - name: Upload to Cloud Storage (Optional)
+        run: |
+          # Example: Upload to AWS S3, Google Cloud, etc
+          # aws s3 cp /opt/backups/latest.sql.gz s3://bucket-name/
+          echo "Backup completed"

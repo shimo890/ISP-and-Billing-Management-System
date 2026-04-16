@@ -1,0 +1,24 @@
+/* App-level utilities only.
+   Core design system now lives in index.css (@layer base/components). */
+
+:root {
+  --brand-primary: #4f46e5;
+}
+
+::selection {
+  background-color: #6366f1;
+  color: #ffffff;
+}
+
+.dark ::selection {
+  background-color: #22d3ee;
+  color: #0f172a;
+}
+
+/* Keep a lightweight helper used by some pages */
+.gradient-text {
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
