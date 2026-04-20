@@ -14,7 +14,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
-python manasge.py eed_rbac   # seeds permissions, roles, and menu
+python manasge.py seed_rbac   # seeds permissions, roles, and menu
 python manage.py runserver
 ```
 
