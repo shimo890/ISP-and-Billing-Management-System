@@ -23,9 +23,9 @@ class CustomerEntitlementMaster(models.Model):
     link_id = models.CharField(max_length=100, blank=True, null=True)
     nttn_uses = models.CharField(max_length=100, blank=True, null=True)
     total_bill = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    type_of_bw = models.CharField(max_length=50, blank=True, null=True, help_text="Home only")
-    type_of_connection = models.CharField(max_length=50, blank=True, null=True, help_text="Home only")
-    connected_pop = models.CharField(max_length=100, blank=True, null=True, help_text="Home only")
+    type_of_bw = models.CharField(max_length=50, blank=True, null=True)
+    type_of_connection = models.CharField(max_length=50, blank=True, null=True)
+    connected_pop = models.CharField(max_length=100, blank=True, null=True)
     last_bill_invoice_date = models.DateTimeField(null=True, blank=True)
     zone_name = models.CharField(
         max_length=200,
@@ -142,16 +142,6 @@ class CustomerEntitlementMaster(models.Model):
                             total += daily_rate * Decimal(str(days_in_period))
                             current = period_end + timedelta(days=1)
 
-                elif customer_type == CustomerMaster.CUSTOMER_TYPE_SOHO:
-                    # For SOHO, use package pricing rate (Monthly wise - flat rate)
-                    if detail.package_pricing_id and detail.package_pricing_id.rate:
-                        # Calculate number of calendar months touched by the intersection
-                        # This ensures if the period spans multiple months (e.g. Nov and Dec), we charge for both.
-                        months_count = (intersection_end.year - intersection_start.year) * 12 + \
-                                       (intersection_end.month - intersection_start.month) + 1
-
-                        if months_count > 0:
-                            total += detail.package_pricing_id.rate * Decimal(months_count)
                 else:
                     # Fallback
                     if detail.mbps and detail.unit_price:
@@ -195,7 +185,6 @@ class CustomerEntitlementDetails(models.Model):
     """Customer Entitlement Details - Detailed entitlement information"""
     TYPE_CHOICES = [
         (CustomerMaster.CUSTOMER_TYPE_BW, 'Bandwidth'),
-        (CustomerMaster.CUSTOMER_TYPE_SOHO, 'SOHO/Home'),
     ]
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -303,9 +292,9 @@ class InvoiceMaster(models.Model):
     nttn_company = models.CharField(max_length=200, blank=True, null=True)
     nttn_capacity = models.CharField(max_length=100, blank=True, null=True)
     total_bill = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    type_of_bw = models.CharField(max_length=50, blank=True, null=True, help_text="Home only")
-    type_of_connection = models.CharField(max_length=50, blank=True, null=True, help_text="Home only")
-    connected_pop = models.CharField(max_length=100, blank=True, null=True, help_text="Home only")
+    type_of_bw = models.CharField(max_length=50, blank=True, null=True)
+    type_of_connection = models.CharField(max_length=50, blank=True, null=True)
+    connected_pop = models.CharField(max_length=100, blank=True, null=True)
     additional_entitlements = models.JSONField(
         default=list,
         null=True,
@@ -442,7 +431,6 @@ class InvoiceDetails(models.Model):
 
     TYPE_CHOICES = [
         (CustomerMaster.CUSTOMER_TYPE_BW, 'Bandwidth'),
-        (CustomerMaster.CUSTOMER_TYPE_SOHO, 'SOHO/Home'),
     ]
 
     id = models.AutoField(primary_key=True)

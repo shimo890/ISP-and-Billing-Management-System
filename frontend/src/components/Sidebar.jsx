@@ -19,7 +19,6 @@ import {
   ChevronRight,
   ChevronUp,
   Shield,
-  ClipboardList,
   Package,
   Receipt,
   CreditCard,
@@ -37,9 +36,9 @@ function Sidebar({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
 
   const [reportsOpen, setReportsOpen] = useState(false);
-  const [paymentOpen, setPaymentOpen] = useState(location.pathname === '/payment' || location.pathname === '/payments' || location.pathname === '/payment-list' || location.pathname === '/bulk-payment' || location.pathname === '/fund-transfers' || location.pathname === '/credit-balances');
+  const [paymentOpen, setPaymentOpen] = useState(location.pathname === '/payment' || location.pathname === '/payments' || location.pathname === '/payment-list' || location.pathname === '/bulk-payment');
   const [invoiceOpen, setInvoiceOpen] = useState(location.pathname === '/invoice' || location.pathname === '/invoices' || location.pathname === '/invoice-view');
-  const [kamOpen, setKamOpen] = useState(location.pathname === '/kam/create' || location.pathname === '/kam/list' || location.pathname === '/reports/kam-growth-churn');
+  const [kamOpen, setKamOpen] = useState(location.pathname === '/kam/create' || location.pathname === '/kam/list');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
@@ -53,9 +52,9 @@ function Sidebar({ isOpen, setIsOpen }) {
   }, []);
 
   useEffect(() => {
-    setPaymentOpen(location.pathname === '/payment' || location.pathname === '/payments' || location.pathname === '/payment-list' || location.pathname === '/bulk-payment' || location.pathname === '/fund-transfers' || location.pathname === '/credit-balances');
+    setPaymentOpen(location.pathname === '/payment' || location.pathname === '/payments' || location.pathname === '/payment-list' || location.pathname === '/bulk-payment');
     setInvoiceOpen(location.pathname === '/invoice' || location.pathname === '/invoices' || location.pathname === '/invoice-view');
-    setKamOpen(location.pathname === '/kam/create' || location.pathname === '/kam/list' || location.pathname === '/reports/kam-growth-churn');
+    setKamOpen(location.pathname === '/kam/create' || location.pathname === '/kam/list');
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -68,7 +67,7 @@ function Sidebar({ isOpen, setIsOpen }) {
     if (path === "/entitlement") {
       if (location.pathname === "/data-entry") {
         const customerType = new URLSearchParams(location.search).get("customerType");
-        return ["bw", "soho"].includes(customerType);
+        return ["bw"].includes(customerType);
       }
     }
     return false;
@@ -94,11 +93,6 @@ function Sidebar({ isOpen, setIsOpen }) {
         {
           name: "List",
           path: "/kam/list",
-          permission: "customers:read",
-        },
-        {
-          name: "Onboard & churn growth",
-          path: "/reports/kam-growth-churn",
           permission: "customers:read",
         },
       ],
@@ -132,16 +126,6 @@ function Sidebar({ isOpen, setIsOpen }) {
           name: "List",
           path: "/payments",
           permission: "payment_details:read",
-        },
-        {
-          name: "Fund Transfer",
-          path: "/fund-transfers",
-          permission: "payments:read",
-        },
-        {
-          name: "Credit Balances",
-          path: "/credit-balances",
-          permission: "customers:read",
         },
       ],
     },
@@ -203,12 +187,6 @@ function Sidebar({ isOpen, setIsOpen }) {
       path: "/activity-logs",
       icon: Activity,
       permission: "logs:read",
-    },
-    {
-      name: "Audit Logs",
-      path: "/audit-logs",
-      icon: ClipboardList,
-      permission: "audit:read",
     },
   ];
 

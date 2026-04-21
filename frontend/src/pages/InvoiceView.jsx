@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
-import { Download, Printer, Mail, Package, Wrench } from 'lucide-react';
+import { Download, Printer, Package, Wrench } from 'lucide-react';
 import qrWebsite from '../assets/qr website.png';
 import api from '../services/api';
 import {
@@ -20,8 +20,6 @@ const InvoiceView = () => {
   const [invoice, setInvoice] = useState(initialInvoice || null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const invoiceRef = useRef();
-  const [emailSending, setEmailSending] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
   // Invoice generation mode used for both PDF download and email.
   // package = show package name (e.g. NIX), service = show service name (e.g. IT Service)
   const [invoiceMode, setInvoiceMode] = useState('package');
@@ -209,18 +207,6 @@ const InvoiceView = () => {
   }
 
   const subtotalBill = Number(invoice.total_bill ?? 0) || 0;
-  const _rawDiscountRate = invoice.discount_rate ?? 0;
-  const discountRateNum = Number.isFinite(Number(_rawDiscountRate)) ? Number(_rawDiscountRate) : 0;
-  const totalDiscountAmount =
-    invoice.total_discount_amount != null && invoice.total_discount_amount !== ''
-      ? Number(invoice.total_discount_amount)
-      : (discountRateNum > 0 ? subtotalBill * (discountRateNum / 100) : 0);
-  const displayDiscountRate =
-    discountRateNum > 0
-      ? discountRateNum
-      : subtotalBill > 0 && totalDiscountAmount > 0
-        ? Math.round((totalDiscountAmount / subtotalBill) * 100 * 100) / 100
-        : 0;
   const vatRateNum = Number.isFinite(Number(invoice.vat_rate ?? 0)) ? Number(invoice.vat_rate ?? 0) : 0;
   const displayTotalVatAmount = Number(invoice.total_vat_amount ?? 0);
   const displayTotalBillAmount = Number(invoice.total_bill_amount ?? 0);
@@ -415,12 +401,6 @@ const InvoiceView = () => {
       { content: 'Subtotal (without VAT):', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold' } },
       { content: formatNumber(subtotalBill), styles: { halign: 'right', fontStyle: 'bold' } },
     ]);
-    if (totalDiscountAmount > 0) {
-      body.push([
-        { content: displayDiscountRate > 0 ? `Discount (${displayDiscountRate}):` : 'Discount:', colSpan: 7, styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: `-${formatNumber(totalDiscountAmount)}`, styles: { halign: 'right', fontStyle: 'bold' } },
-      ]);
-    }
     body.push([
       { content: `VAT (${vatRateNum}):`, colSpan: 7, styles: { halign: 'right', fontStyle: 'bold' } },
       { content: formatNumber(displayTotalVatAmount), styles: { halign: 'right', fontStyle: 'bold' } },
@@ -506,103 +486,6 @@ const InvoiceView = () => {
     }
   };
 
-  /** Send invoice as PDF via email based on selected invoice mode. */
-  const handleSendEmail = async (recipientEmail) => {
-    if (!recipientEmail?.trim() || !recipientEmail.includes('@')) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-    setEmailSending(true);
-    try {
-      const pdf = await generateInvoicePDF({ useServiceName: invoiceMode === 'service' });
-      const pdfBlob = pdf.output('blob');
-      const reader = new FileReader();
-      reader.readAsDataURL(pdfBlob);
-      reader.onloadend = async () => {
-        const base64 = reader.result?.split(',')[1]; // strip data:application/pdf;base64,
-        if (!base64) {
-          setEmailSending(false);
-          alert('Failed to generate PDF.');
-          return;
-        }
-        try {
-          await api.post(`/bills/invoices/${invoice.id}/send-email/`, {
-            email: recipientEmail.trim(),
-            pdf_base64: base64,
-            filename: getInvoicePdfFilename(),
-          });
-          setShowEmailModal(false);
-          alert(`Invoice sent successfully to ${recipientEmail}`);
-        } catch (err) {
-          alert(err?.message || 'Failed to send email. Please try again.');
-        } finally {
-          setEmailSending(false);
-        }
-      };
-      reader.onerror = () => {
-        setEmailSending(false);
-        alert('Failed to generate PDF.');
-      };
-    } catch (error) {
-      setEmailSending(false);
-      alert(`Error: ${error?.message || 'Failed to generate PDF'}`);
-    }
-  };
-
-  /** Send invoice as PDF via WhatsApp - Web Share API attaches file when user selects WhatsApp. */
-  const handleShareWhatsApp = async () => {
-    try {
-      const pdf = await generateInvoicePDF();
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], getInvoicePdfFilename(), { type: 'application/pdf' });
-      const shareText = `Invoice ${invoice.invoice_number} - Total: ${invoice.total_bill_amount} BDT | ${COMPANY_LEGAL_NAME}`;
-      const shareData = {
-        title: `Invoice ${invoice.invoice_number}`,
-        text: shareText,
-        files: [file],
-      };
-
-      // Web Share API: when user picks WhatsApp, the PDF is automatically attached
-      if (navigator.share && (navigator.canShare?.(shareData) ?? true)) {
-        try {
-          await navigator.share(shareData);
-          return;
-        } catch (shareErr) {
-          if (shareErr?.name === 'AbortError') {
-            return;
-          }
-          console.warn('Share failed, falling back to download:', shareErr);
-        }
-      }
-
-      // Fallback: Web Share not available (e.g. HTTP, or browser doesn't support file sharing)
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = getInvoicePdfFilename();
-      a.click();
-      URL.revokeObjectURL(url);
-
-      const phone = invoice.entitlement_details?.customer_master?.phone || invoice.customer_master?.phone;
-      const cleanPhone = phone ? String(phone).replace(/\D/g, '').replace(/^0/, '880') : '';
-      const waUrl = cleanPhone
-        ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Please find your invoice attached. ' + shareText)}`
-        : `https://wa.me/?text=${encodeURIComponent('Please find your invoice attached. ' + shareText)}`;
-      window.open(waUrl, '_blank');
-      alert('Automatic WhatsApp sharing requires a supported browser (e.g. Chrome/Safari on phone). PDF has been downloaded—please share it from your device or use the Download PDF button and send from your phone.');
-    } catch (error) {
-      if (error?.name !== 'AbortError') {
-        try {
-          const pdf = await generateInvoicePDF();
-          pdf.save(getInvoicePdfFilename());
-          alert('PDF downloaded. For direct WhatsApp sharing, please use a mobile device (Chrome or Safari).');
-        } catch (e) {
-          console.error('Share error:', e);
-          alert('Could not generate or share PDF. Please try Download PDF instead.');
-        }
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
@@ -652,15 +535,6 @@ const InvoiceView = () => {
             </svg>
             Back to Invoices
           </button>
-          <button
-            onClick={() => navigate(`/invoice-edit/${invoice.id}`, { state: { invoice } })}
-            className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit Invoice
-          </button>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Invoice Generation Mode:</span>
@@ -701,61 +575,6 @@ const InvoiceView = () => {
               <Download className="w-4 h-4 mr-2" />
               Download PDF
             </button>
-            <button
-              onClick={handleShareWhatsApp}
-              className="bg-[#25D366] hover:bg-[#20BD5A] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-              title="Share invoice PDF to WhatsApp—select WhatsApp from the share menu and the PDF will be attached automatically (works best on mobile)"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
-              WhatsApp
-            </button>
-            <button
-              onClick={() => setShowEmailModal(true)}
-              disabled={emailSending}
-              className="bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-              title="Send invoice as PDF via email"
-            >
-              <Mail className="w-4 h-4 mr-2" />
-              {emailSending ? 'Sending…' : 'Email'}
-            </button>
-            {showEmailModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => !emailSending && setShowEmailModal(false)}>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Send Invoice via Email</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Enter the recipient email address. The invoice will be generated in{' '}
-                    <strong>{invoiceMode === 'service' ? 'Service Mode' : 'Package Mode'}</strong>{' '}
-                    and sent as an attachment.
-                  </p>
-                  <input
-                    type="email"
-                    placeholder="customer@example.com"
-                    defaultValue={invoice?.entitlement_details?.customer_master?.email || invoice?.customer_master?.email || ''}
-                    id="invoice-email-input"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mb-4"
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendEmail(document.getElementById('invoice-email-input')?.value)}
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => !emailSending && setShowEmailModal(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-                      disabled={emailSending}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleSendEmail(document.getElementById('invoice-email-input')?.value)}
-                      disabled={emailSending}
-                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg disabled:opacity-50"
-                    >
-                      {emailSending ? 'Sending…' : 'Send'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
             <button
               onClick={handlePrint}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
@@ -934,14 +753,6 @@ const InvoiceView = () => {
                 <td colSpan="7" style={{ border: '1px solid #333', padding: '2px 4px', textAlign: 'right', verticalAlign: 'middle', fontWeight: '600', lineHeight: '1.2' }}>Subtotal (without VAT):</td>
                 <td style={{ border: '1px solid #333', padding: '2px 4px', textAlign: 'right', verticalAlign: 'middle', fontWeight: '600', lineHeight: '1.2' }}>{formatNumber(subtotalBill)}</td>
               </tr>
-              {totalDiscountAmount > 0 && (
-                <tr>
-                  <td colSpan="7" style={{ border: '1px solid #333', padding: '2px 4px', textAlign: 'right', verticalAlign: 'middle', fontWeight: '600', lineHeight: '1.2' }}>
-                    {displayDiscountRate > 0 ? `Discount (${displayDiscountRate}%):` : "Discount:"}
-                  </td>
-                  <td style={{ border: '1px solid #333', padding: '2px 4px', textAlign: 'right', verticalAlign: 'middle', fontWeight: '600', lineHeight: '1.2' }}>-{formatNumber(totalDiscountAmount)}</td>
-                </tr>
-              )}
               <tr>
                 <td colSpan="7" style={{ border: '1px solid #333', padding: '2px 4px', textAlign: 'right', verticalAlign: 'middle', fontWeight: '600', lineHeight: '1.2' }}>
                   VAT ({vatRateNum}%):

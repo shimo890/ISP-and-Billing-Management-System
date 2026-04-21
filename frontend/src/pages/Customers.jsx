@@ -61,11 +61,6 @@ export default function Customers() {
     customer_type: "",
     company_name: "",
     phone: "",
-    total_client: "",
-    total_active_client: "",
-    previous_total_client: "",
-    free_giveaway_client: "",
-    default_percentage_share: "",
     contact_person: "",
     status: "active",
     is_active: true,
@@ -92,7 +87,6 @@ export default function Customers() {
   const getCustomerTypeDisplay = (customerType) => {
     const choices = {
       bw: "Bandwidth",
-      soho: "SOHO/Home",
     };
     return choices[customerType] || customerType || "-";
   };
@@ -272,26 +266,6 @@ export default function Customers() {
         [name]: newValue,
       };
 
-      // Handle customer_type changes
-      if (name === "customer_type") {
-        if (newValue === "bw" || newValue === "soho") {
-          // Keep numeric metrics available for both supported customer types
-          updated.total_client = updated.total_client || "0";
-          updated.total_active_client = updated.total_active_client || "0";
-          updated.previous_total_client = updated.previous_total_client || "0";
-          updated.free_giveaway_client = updated.free_giveaway_client || "0";
-          updated.default_percentage_share =
-            updated.default_percentage_share || "0";
-        } else {
-          // Clear fields for other types
-          updated.total_client = "";
-          updated.total_active_client = "";
-          updated.previous_total_client = "";
-          updated.free_giveaway_client = "";
-          updated.default_percentage_share = "";
-        }
-      }
-
       return updated;
     });
   };
@@ -313,21 +287,6 @@ export default function Customers() {
           customer_type: formData.customer_type,
           company_name: formData.company_name,
           phone: formData.phone || "",
-          total_client: formData.total_client
-            ? parseInt(formData.total_client)
-            : null,
-          total_active_client: formData.total_active_client
-            ? parseInt(formData.total_active_client)
-            : null,
-          previous_total_client: formData.previous_total_client
-            ? parseInt(formData.previous_total_client)
-            : null,
-          free_giveaway_client: formData.free_giveaway_client
-            ? parseInt(formData.free_giveaway_client)
-            : null,
-          default_percentage_share: formData.default_percentage_share
-            ? parseFloat(formData.default_percentage_share)
-            : null,
           contact_person: formData.contact_person || "",
           status: formData.status,
           is_active: formData.is_active,
@@ -353,21 +312,6 @@ export default function Customers() {
           customer_type: formData.customer_type,
           company_name: formData.company_name,
           phone: formData.phone || "",
-          total_client: formData.total_client
-            ? parseInt(formData.total_client)
-            : null,
-          total_active_client: formData.total_active_client
-            ? parseInt(formData.total_active_client)
-            : null,
-          previous_total_client: formData.previous_total_client
-            ? parseInt(formData.previous_total_client)
-            : null,
-          free_giveaway_client: formData.free_giveaway_client
-            ? parseInt(formData.free_giveaway_client)
-            : null,
-          default_percentage_share: formData.default_percentage_share
-            ? parseFloat(formData.default_percentage_share)
-            : null,
           contact_person: formData.contact_person || "",
           status: formData.status,
           is_active: formData.is_active,
@@ -421,11 +365,6 @@ export default function Customers() {
       customer_type: "",
       company_name: "",
       phone: "",
-      total_client: "",
-      total_active_client: "",
-      previous_total_client: "",
-      free_giveaway_client: "",
-      default_percentage_share: "",
       contact_person: "",
       status: "active",
       is_active: true,
@@ -436,8 +375,6 @@ export default function Customers() {
   };
 
   const handleEdit = (customer) => {
-    const isBwOrSoho =
-      customer.customer_type === "bw" || customer.customer_type === "soho";
     setFormData({
       customer_name: customer.customer_name || customer.name || "",
       nid: customer.nid || "",
@@ -446,21 +383,6 @@ export default function Customers() {
       customer_type: customer.customer_type || "",
       company_name: customer.company_name || "",
       phone: customer.phone || "",
-      total_client: isBwOrSoho
-        ? customer.total_client || "0"
-        : customer.total_client || "",
-      total_active_client: isBwOrSoho
-        ? customer.total_active_client || "0"
-        : customer.total_active_client || "",
-      previous_total_client: isBwOrSoho
-        ? customer.previous_total_client || "0"
-        : customer.previous_total_client || "",
-      free_giveaway_client: isBwOrSoho
-        ? customer.free_giveaway_client || "0"
-        : customer.free_giveaway_client || "",
-      default_percentage_share: isBwOrSoho
-        ? customer.default_percentage_share || "0"
-        : customer.default_percentage_share || "",
       contact_person: customer.contact_person || "",
       status: customer.status || "active",
       is_active: customer.is_active !== undefined ? customer.is_active : true,
@@ -953,116 +875,8 @@ export default function Customers() {
                       Select Customer Type
                     </option>
                     <option value="bw">Bandwidth</option>
-                    <option value="soho">SOHO/Home</option>
                   </select>
                 </div>
-
-                {/* Metrics fields for supported customer types */}
-                {(formData.customer_type === "bw" || formData.customer_type === "soho") && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-medium mb-2 ${
-                          isDark ? "text-silver-300" : "text-gray-700"
-                        }`}
-                      >
-                        Total Client
-                      </label>
-                      <input
-                        type="number"
-                        name="total_client"
-                        value={formData.total_client}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
-                          isDark
-                            ? "bg-dark-700 border-dark-600 text-white focus:border-gold-500"
-                            : "bg-white border-gold-200 text-dark-900 focus:border-gold-500"
-                        } focus:outline-none`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-medium mb-2 ${
-                          isDark ? "text-silver-300" : "text-gray-700"
-                        }`}
-                      >
-                        Total Active Client
-                      </label>
-                      <input
-                        type="number"
-                        name="total_active_client"
-                        value={formData.total_active_client}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
-                          isDark
-                            ? "bg-dark-700 border-dark-600 text-white focus:border-gold-500"
-                            : "bg-white border-gold-200 text-dark-900 focus:border-gold-500"
-                        } focus:outline-none`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-medium mb-2 ${
-                          isDark ? "text-silver-300" : "text-gray-700"
-                        }`}
-                      >
-                        Previous Total Client
-                      </label>
-                      <input
-                        type="number"
-                        name="previous_total_client"
-                        value={formData.previous_total_client}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
-                          isDark
-                            ? "bg-dark-700 border-dark-600 text-white focus:border-gold-500"
-                            : "bg-white border-gold-200 text-dark-900 focus:border-gold-500"
-                        } focus:outline-none`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-medium mb-2 ${
-                          isDark ? "text-silver-300" : "text-gray-700"
-                        }`}
-                      >
-                        Free Giveaway Client
-                      </label>
-                      <input
-                        type="number"
-                        name="free_giveaway_client"
-                        value={formData.free_giveaway_client}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
-                          isDark
-                            ? "bg-dark-700 border-dark-600 text-white focus:border-gold-500"
-                            : "bg-white border-gold-200 text-dark-900 focus:border-gold-500"
-                        } focus:outline-none`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-medium mb-2 ${
-                          isDark ? "text-silver-300" : "text-gray-700"
-                        }`}
-                      >
-                        Default Percentage Share
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        name="default_percentage_share"
-                        value={formData.default_percentage_share}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
-                          isDark
-                            ? "bg-dark-700 border-dark-600 text-white focus:border-gold-500"
-                            : "bg-white border-gold-200 text-dark-900 focus:border-gold-500"
-                        } focus:outline-none`}
-                      />
-                    </div>
-                  </>
-                )}
 
                 {/* KAM */}
                 <div>
@@ -1291,7 +1105,6 @@ export default function Customers() {
               >
                 <option value="all">All Types</option>
                 <option value="bw">Bandwidth</option>
-                <option value="soho">SOHO/Home</option>
               </select>
             </div>
 

@@ -17,13 +17,11 @@ import ResetPassword from "./pages/ResetPassword";
 import Register from "./pages/Register";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import Dashboard from "./pages/Dashboard";
-import KAMGrowthChurnReport from "./pages/KAMGrowthChurnReport";
 import KAMManagement from "./pages/KAMManagement";
 import Ledger from "./pages/Ledger";
 import SingleLedger from "./pages/SingleLedger";
 import AdminDashboard from "./pages/AdminDashboard";
 import ActivityLogs from "./pages/ActivityLogs";
-import AuditLogs from "./pages/AuditLogs";
 import CompanyReports from "./pages/CompanyReports";
 import DataEntryPerformance from "./pages/DataEntryPerformance";
 import DataEntry from "./pages/DataEntry";
@@ -37,12 +35,8 @@ import PaymentForm from "./pages/PaymentForm";
 import BulkPaymentForm from "./pages/BulkPaymentForm";
 import InvoiceSingle from "./pages/InvoiceSingle";
 import InvoiceView from "./pages/InvoiceView";
-import InvoiceEdit from "./pages/InvoiceEdit";
-import PaymentEdit from "./pages/PaymentEdit";
 import Payments from "./pages/Payments";
 import PaymentView from "./pages/PaymentView";
-import FundTransfers from "./pages/FundTransfers";
-import CreditBalances from "./pages/CreditBalances";
 import Profile from "./pages/Profile";
 import Packages from "./pages/Packages";
 import "./App.css";
@@ -187,17 +181,6 @@ const AppRoutes = () => {
       />
 
       <Route
-        path="/reports/kam-growth-churn"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <KAMGrowthChurnReport />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
         path="/kam/create"
         element={
           <ProtectedRoute requiredPermission="customers:read">
@@ -321,27 +304,6 @@ const AppRoutes = () => {
         }
       />
 
-      <Route
-        path="/fund-transfers"
-        element={
-          <ProtectedRoute requiredPermission="payments:read">
-            <AppLayout>
-              <FundTransfers />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/credit-balances"
-        element={
-          <ProtectedRoute requiredPermission="customers:read">
-            <AppLayout>
-              <CreditBalances />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
 
       {/* <Route
         path="/bulk-payment"
@@ -376,28 +338,6 @@ const AppRoutes = () => {
         }
       />
 
-      <Route
-        path="/invoice-edit/:id"
-        element={
-          <ProtectedRoute requiredPermission="invoices:update">
-            <AppLayout>
-              <InvoiceEdit />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/payment-edit/:id"
-        element={
-          <ProtectedRoute requiredPermission="payments:create">
-            <AppLayout>
-              <PaymentEdit />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
 
       <Route
         path="/customers"
@@ -461,16 +401,6 @@ const AppRoutes = () => {
           <AdminRoute>
             <AppLayout>
               <ActivityLogs />
-            </AppLayout>
-          </AdminRoute>
-        }
-      />
-      <Route
-        path="/audit-logs"
-        element={
-          <AdminRoute>
-            <AppLayout>
-              <AuditLogs />
             </AppLayout>
           </AdminRoute>
         }

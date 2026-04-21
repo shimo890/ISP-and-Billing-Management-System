@@ -39,7 +39,6 @@ from .dashboard_service import DashboardAnalyticsService
 from .sales_analytics_service import (
     get_date_range,
     SalesAnalyticsService,
-    get_kam_growth_churn_date_range,
 )
 from .ledger_service import get_customer_ledger, get_all_customers_ledger_summary
 from apps.authentication.permissions import RequirePermissions
@@ -314,7 +313,6 @@ class InvoiceMasterViewSet(viewsets.ModelViewSet):
         from apps.bills.utils import (
             calculate_bw_customer_bill,
             calculate_mac_customer_bill,
-            calculate_soho_customer_bill,
             get_billing_start_date,
             preview_invoice_for_multiple_entitlements
         )
@@ -363,8 +361,6 @@ class InvoiceMasterViewSet(viewsets.ModelViewSet):
                 calculation = calculate_bw_customer_bill(entitlement, target_date)
             elif customer_type == 'channel_partner':
                 calculation = calculate_mac_customer_bill(entitlement, target_date)
-            elif customer_type == 'soho':
-                calculation = calculate_soho_customer_bill(entitlement, target_date)
             else:
                 return Response(
                     {"error": f"Unknown customer type: {customer_type}"}, 
@@ -983,31 +979,6 @@ class CustomerEntitlementMasterViewSet(viewsets.ModelViewSet):
                         )
                         created_details.append(detail)
                 
-                # Create SOHO details
-                if 'soho_details' in serializer.validated_data:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.info(f"Creating SOHO details: {serializer.validated_data['soho_details']}")
-                    
-                    for detail_data in serializer.validated_data['soho_details']:
-                        logger.info(f"SOHO detail data: package_pricing_id={detail_data.get('package_pricing_id')}, mbps={detail_data.get('mbps')}, unit_price={detail_data.get('unit_price')}")
-                        
-                        detail = CustomerEntitlementDetails.objects.create(
-                            cust_entitlement_id=entitlement,
-                            type='soho',
-                            mbps=detail_data.get('mbps'),  # Optional if package_pricing_id is provided
-                            unit_price=detail_data.get('unit_price'),  # Optional if package_pricing_id is provided
-                            start_date=detail_data['start_date'],
-                            end_date=detail_data.get('end_date'),
-                            package_pricing_id_id=detail_data.get('package_pricing_id'),
-                            is_active=detail_data.get('is_active', True),
-                            status=detail_data.get('status', 'active'),
-                            remarks=detail_data.get('remarks'),
-                            created_by=request.user
-                        )
-                        created_details.append(detail)
-                        logger.info(f"Created SOHO detail ID: {detail.id}")
-                
                 result_serializer = CustomerEntitlementDetailsSerializer(created_details, many=True)
                 return Response(result_serializer.data, status=status.HTTP_201_CREATED)
             
@@ -1056,8 +1027,7 @@ class CustomerEntitlementDetailsViewSet(viewsets.ModelViewSet):
         
         if entitlement and new_start_date and new_mbps is not None:
             # Get the latest active detail for the same package type
-            # For BW/MAC: compare by package_master_id
-            # For SOHO: compare by package_pricing_id
+            # Compare by package_master_id
             filter_kwargs = {
                 'cust_entitlement_id': entitlement,
                 'is_active': True,
@@ -1065,10 +1035,7 @@ class CustomerEntitlementDetailsViewSet(viewsets.ModelViewSet):
                 'end_date__isnull': True  # Only open-ended details
             }
             
-            if detail_type == 'soho':
-                filter_kwargs['package_pricing_id'] = new_package_pricing
-            else:  # BW and Channel Partner use package_master_id
-                filter_kwargs['package_master_id'] = new_package_master
+            filter_kwargs['package_master_id'] = new_package_master
             
             latest_detail = CustomerEntitlementDetails.objects.filter(**filter_kwargs).order_by('-start_date').first()
             
@@ -1106,7 +1073,6 @@ class CustomerEntitlementDetailsViewSet(viewsets.ModelViewSet):
         - mbps changes
         - unit_price changes
         - package_master_id changes (BW/MAC customers)
-        - package_pricing_id changes (SOHO customers)
         - custom_mac_percentage_share changes (Channel Partners)
         """
         old_detail = self.get_object()
@@ -1117,11 +1083,6 @@ class CustomerEntitlementDetailsViewSet(viewsets.ModelViewSet):
         # Check for package_master_id changes (for BW/MAC customers)
         if 'package_master_id' in serializer.validated_data:
             if old_detail.package_master_id != serializer.validated_data.get('package_master_id'):
-                is_package_change = True
-
-        # Check for package_pricing_id changes (for SOHO customers)
-        if 'package_pricing_id' in serializer.validated_data:
-            if old_detail.package_pricing_id != serializer.validated_data.get('package_pricing_id'):
                 is_package_change = True
 
         # Check for mbps or unit_price changes (for BW/MAC customers)
@@ -1174,11 +1135,7 @@ class CustomerEntitlementDetailsViewSet(viewsets.ModelViewSet):
             # Add change tracking in remarks
             old_package_info = ""
             if old_detail.package_master_id:
-                # BW or Channel Partner customer
                 old_package_info = f"Package: {old_detail.package_master_id.package_name}"
-            elif old_detail.package_pricing_id:
-                # SOHO customer
-                old_package_info = f"Package: {old_detail.package_pricing_id.package_master_id.package_name}"
             else:
                 # Fallback if neither exists
                 old_package_info = f"Mbps: {old_detail.mbps}, Price: {old_detail.unit_price}"
@@ -1290,7 +1247,6 @@ class CustomerEntitlementDetailsViewSet(viewsets.ModelViewSet):
         history_by_type = {
             'bw': [],
             'channel_partner': [],
-            'soho': []
         }
         
         for detail in queryset:
@@ -1358,7 +1314,7 @@ class AddEntitlementDetailView(generics.CreateAPIView):
     
     Optional Fields (for both CREATE and UPDATE):
     - package_master_id: Package master reference (for BW/MAC)
-    - package_pricing_id: Package pricing reference (for SOHO)
+    - package_pricing_id: Package pricing reference
     - status: Status (active, inactive, expired)
     - is_active: Active flag
     - end_date: End date
@@ -1555,86 +1511,6 @@ def _parse_sales_analytics_params(request):
         'service': service,
         'kam_drill_int': kam_drill_int,
     }, None
-
-
-class KAMGrowthChurnReportView(APIView):
-    """
-    KAM onboarding vs termination report for ISP subscribers (invoice-driven MRC).
-
-    Query: kam_id (required), period, from_date, to_date (same rules as other billing analytics).
-    """
-
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        kam_id_s = request.query_params.get("kam_id")
-        if not kam_id_s:
-            return Response(
-                {"error": "kam_id is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        try:
-            kam_id_int = int(kam_id_s)
-        except (TypeError, ValueError):
-            return Response(
-                {"error": "kam_id must be an integer."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        parsed, err = _parse_sales_analytics_params(request)
-        if err:
-            return err
-
-        period = parsed["period"]
-        base_svc = parsed["service"]
-        from_date = to_date = None
-        from_date_s = request.query_params.get("from_date")
-        to_date_s = request.query_params.get("to_date")
-        if from_date_s:
-            try:
-                from_date = datetime.strptime(from_date_s, "%Y-%m-%d").date()
-            except ValueError:
-                from_date = None
-        if to_date_s:
-            try:
-                to_date = datetime.strptime(to_date_s, "%Y-%m-%d").date()
-            except ValueError:
-                to_date = None
-
-        ext_start, ext_end = get_kam_growth_churn_date_range(
-            period=period, from_date=from_date, to_date=to_date
-        )
-        if not ext_start or not ext_end:
-            return Response(
-                {"error": "Invalid date range for KAM growth & churn report."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        service = SalesAnalyticsService(
-            start_date=ext_start,
-            end_date=ext_end,
-            kam_id=base_svc.kam_id,
-            customer_id=base_svc.customer_id,
-        )
-        payload = service.get_kam_growth_churn_report(kam_id_int, period=period)
-
-        if isinstance(payload, dict) and payload.get("error") == "KAM not found":
-            return Response(payload, status=status.HTTP_404_NOT_FOUND)
-        if isinstance(payload, dict) and payload.get("error"):
-            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
-
-        def json_friendly(obj):
-            if hasattr(obj, "quantize"):
-                return float(obj)
-            if isinstance(obj, date):
-                return obj.isoformat()
-            if isinstance(obj, list):
-                return [json_friendly(x) for x in obj]
-            if isinstance(obj, dict):
-                return {k: json_friendly(v) for k, v in obj.items()}
-            return obj
-
-        return Response(json_friendly(payload), status=status.HTTP_200_OK)
 
 
 class CustomerLedgerReportView(APIView):

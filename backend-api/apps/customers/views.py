@@ -11,7 +11,7 @@ import csv
 from django.db.models import Q, Sum, Count
 from io import BytesIO
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Prospect, CustomerMaster, ProspectStatusHistory, KAMMaster, CustomerCreditTransaction
+from .models import Prospect, CustomerMaster, ProspectStatusHistory, KAMMaster
 from apps.bills.models import CustomerEntitlementMaster, CustomerEntitlementDetails
 from .serializers import (
     ProspectSerializer,
@@ -142,144 +142,6 @@ class CustomerMasterViewSet(viewsets.ModelViewSet):
         serializer = CustomerEntitlementMasterSerializer(entitlements, many=True)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], url_path='credit-balances')
-    def credit_balances_list(self, request):
-        """
-        List all customers with non-zero credit balance.
-        Returns customer_id, customer_name, customer_number, credit_balance.
-        Uses a single aggregation query instead of N per-customer queries.
-        """
-        from decimal import Decimal
-        from django.db.models import Sum
-
-        user = request.user
-        # Base queryset for credit transactions (respects sales_person KAM filter)
-        txn_qs = CustomerCreditTransaction.objects.all()
-        if user.is_authenticated and hasattr(user, 'role') and user.role and user.role.name == 'sales_person':
-            txn_qs = txn_qs.filter(customer_id__kam_id__kam_name=user.username)
-
-        # Single aggregation: credit balance per customer
-        credit_rows = list(
-            txn_qs.values('customer_id')
-            .annotate(credit_balance=Sum('amount'))
-            .filter(credit_balance__gt=Decimal('0'))
-            .order_by('-credit_balance')
-        )
-
-        if not credit_rows:
-            return Response([])
-
-        ids_ordered = [row['customer_id'] for row in credit_rows]
-        balance_map = {row['customer_id']: float(row['credit_balance']) for row in credit_rows}
-
-        # Single query for customer names/numbers
-        customers = CustomerMaster.objects.filter(id__in=ids_ordered).in_bulk()
-
-        result = [
-            {
-                'customer_id': cid,
-                'customer_name': customers[cid].customer_name,
-                'company_name': customers[cid].company_name or '',
-                'customer_number': customers[cid].customer_number or '',
-                'credit_balance': balance_map[cid],
-            }
-            for cid in ids_ordered
-            if cid in customers
-        ]
-        return Response(result)
-
-    @action(detail=True, methods=['get'], url_path='credit-balance')
-    def credit_balance(self, request, pk=None):
-        """
-        Get customer credit / advance balance (overpayment, transfer in/out).
-        Returns current balance and list of credit transactions.
-        """
-        customer = self.get_object()
-        balance = customer.get_credit_balance()
-        transactions = CustomerCreditTransaction.objects.filter(
-            customer_id=customer
-        ).select_related('invoice_id').order_by('-entry_date', '-id')[:100]
-        return Response({
-            'customer_id': customer.id,
-            'customer_name': customer.customer_name,
-            'customer_number': customer.customer_number,
-            'credit_balance': float(balance),
-            'transactions': [
-                {
-                    'id': t.id,
-                    'amount': float(t.amount),
-                    'transaction_type': t.transaction_type,
-                    'reference_type': t.reference_type,
-                    'reference_id': t.reference_id,
-                    'entry_date': t.entry_date.isoformat(),
-                    'remarks': t.remarks or '',
-                    'invoice_id': t.invoice_id_id,
-                    'invoice_number': t.invoice_id.invoice_number if t.invoice_id else None,
-                    'created_at': t.created_at.isoformat(),
-                }
-                for t in transactions
-            ],
-        })
-
-    @action(detail=True, methods=['get'], url_path='payments-with-credit')
-    def payments_with_credit(self, request, pk=None):
-        """
-        Get payments that have overpayment credit available for fund transfer.
-        Returns CustomerCreditTransaction records where reference_type=payment (overpayment)
-        with PaymentMaster and Invoice details for use when creating fund transfers.
-        Use payment_master_id as source_payment_master_id in POST /api/payments/fund-transfers/
-        """
-        from apps.payment.models import PaymentMaster
-
-        customer = self.get_object()
-        transactions = CustomerCreditTransaction.objects.filter(
-            customer_id=customer,
-            transaction_type=CustomerCreditTransaction.TRANSACTION_TYPE_OVERPAYMENT,
-            reference_type=CustomerCreditTransaction.REFERENCE_TYPE_PAYMENT,
-            reference_id__isnull=False,
-            amount__gt=0,
-        ).select_related('invoice_id').order_by('-entry_date', '-id')
-
-        from decimal import Decimal
-        # Aggregate credit by payment_master_id (in case multiple txns reference same payment)
-        payment_credits = {}
-        for t in transactions:
-            payment_id = t.reference_id
-            if not payment_id:
-                continue
-            amt = Decimal(str(t.amount))
-            if payment_id not in payment_credits:
-                payment_credits[payment_id] = {'amount': amt, 'entry_date': t.entry_date, 'remarks': t.remarks}
-            else:
-                payment_credits[payment_id]['amount'] += amt
-        result = []
-        for payment_id, info in payment_credits.items():
-            if info['amount'] <= 0:
-                continue
-            try:
-                pm = PaymentMaster.objects.select_related(
-                    'invoice_master_id', 'invoice_master_id__customer_entitlement_master_id'
-                ).get(pk=payment_id)
-            except PaymentMaster.DoesNotExist:
-                continue
-            invoice = pm.invoice_master_id
-            result.append({
-                'payment_master_id': pm.id,
-                'payment_date': pm.payment_date.isoformat(),
-                'payment_method': pm.payment_method,
-                'invoice_id': invoice.id if invoice else None,
-                'invoice_number': invoice.invoice_number if invoice else None,
-                'credit_amount': float(info['amount']),
-                'entry_date': info['entry_date'].isoformat(),
-                'remarks': info['remarks'] or '',
-            })
-        result.sort(key=lambda x: (x['entry_date'], x['payment_master_id']), reverse=True)
-        return Response({
-            'customer_id': customer.id,
-            'customer_name': customer.customer_name,
-            'credit_balance': float(customer.get_credit_balance()),
-            'payments_with_credit': result,
-        })
 
     @action(detail=True, methods=['get'], url_path='cumulative-balance')
     def cumulative_balance(self, request, pk=None):
@@ -571,10 +433,6 @@ class CustomerMasterViewSet(viewsets.ModelViewSet):
             'KAM Name': 'John Doe',
             'KAM Designation': 'Senior KAM',
             'Customer Number': '',
-            'Total Clients': 10,
-            'Total Active Clients': 8,
-            'Free Giveaway Clients': 0,
-            'Default % Share': 20.5,
             'Contact Person': 'Jane Smith',
             'Status': 'active',
             'Last Bill Date': '',

@@ -9,7 +9,6 @@ import api from "../services/api";
 
 const CUSTOMER_TYPES = [
   { value: "bw", label: "Bandwidth" },
-  { value: "soho", label: "SOHO/Home" },
 ];
 
 /** Format date as "January 2025" for clear month display */

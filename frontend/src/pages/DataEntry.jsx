@@ -4025,97 +4025,6 @@ export default function DataEntry() {
                             />
                           </div>
 
-                          {/* Total Client */}
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-2 ${
-                                isDark ? "text-silver-300" : "text-gray-700"
-                              }`}
-                            >
-                              Total Client
-                            </label>
-                            <input
-                              type="number"
-                              name="total_client"
-                              value={formData.total_client}
-                              readOnly
-                              placeholder="0"
-                              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 cursor-not-allowed ${
-                                isDark
-                                  ? "bg-dark-800 border-dark-600 text-white"
-                                  : "bg-gray-100 border-gray-300 text-gray-700"
-                              } focus:outline-none`}
-                            />
-                          </div>
-
-                          {/* Total Active Client */}
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-2 ${
-                                isDark ? "text-silver-300" : "text-gray-700"
-                              }`}
-                            >
-                              Total Active Client
-                            </label>
-                            <input
-                              type="number"
-                              name="total_active_client"
-                              value={formData.total_active_client}
-                              readOnly
-                              placeholder="0"
-                              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 cursor-not-allowed ${
-                                isDark
-                                  ? "bg-dark-800 border-dark-600 text-white"
-                                  : "bg-gray-100 border-gray-300 text-gray-700"
-                              } focus:outline-none`}
-                            />
-                          </div>
-
-                          {/* Previous Total Client */}
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-2 ${
-                                isDark ? "text-silver-300" : "text-gray-700"
-                              }`}
-                            >
-                              Previous Total Client
-                            </label>
-                            <input
-                              type="number"
-                              name="previous_total_client"
-                              value={formData.previous_total_client}
-                              readOnly
-                              placeholder="0"
-                              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 cursor-not-allowed ${
-                                isDark
-                                  ? "bg-dark-800 border-dark-600 text-white"
-                                  : "bg-gray-100 border-gray-300 text-gray-700"
-                              } focus:outline-none`}
-                            />
-                          </div>
-
-                          {/* Free Giveaway Client */}
-                          <div>
-                            <label
-                              className={`block text-sm font-medium mb-2 ${
-                                isDark ? "text-silver-300" : "text-gray-700"
-                              }`}
-                            >
-                              Free Giveaway Client
-                            </label>
-                            <input
-                              type="number"
-                              name="free_giveaway_client"
-                              value={formData.free_giveaway_client}
-                              readOnly
-                              placeholder="0"
-                              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 cursor-not-allowed ${
-                                isDark
-                                  ? "bg-dark-800 border-dark-600 text-white"
-                                  : "bg-gray-100 border-gray-300 text-gray-700"
-                              } focus:outline-none`}
-                            />
-                          </div>
 
                           {/* Status */}
                           <div>
@@ -5202,34 +5111,6 @@ export default function DataEntry() {
                             }`}
                           >
                             Activation Date
-                          </th>
-                          <th
-                            className={`px-2 sm:px-4 py-3 text-left font-semibold whitespace-nowrap ${
-                              isDark ? "text-silver-300" : "text-gray-700"
-                            }`}
-                          >
-                            Total Client
-                          </th>
-                          <th
-                            className={`px-2 sm:px-4 py-3 text-left font-semibold whitespace-nowrap ${
-                              isDark ? "text-silver-300" : "text-gray-700"
-                            }`}
-                          >
-                            Total Active Client
-                          </th>
-                          <th
-                            className={`px-2 sm:px-4 py-3 text-left font-semibold whitespace-nowrap ${
-                              isDark ? "text-silver-300" : "text-gray-700"
-                            }`}
-                          >
-                            Previous Total Client
-                          </th>
-                          <th
-                            className={`px-2 sm:px-4 py-3 text-left font-semibold whitespace-nowrap ${
-                              isDark ? "text-silver-300" : "text-gray-700"
-                            }`}
-                          >
-                            Free Giveaway Client
                           </th>
                           <th
                             className={`px-2 sm:px-4 py-3 text-left font-semibold whitespace-nowrap ${
@@ -6870,71 +6751,6 @@ export default function DataEntry() {
                       </p>
                     </div>
 
-                    {/* Channel Partner Information (if applicable) */}
-                    {(viewingBill.total_client !== undefined ||
-                      viewingBill.total_active_client !== undefined ||
-                      viewingBill.previous_total_client !== undefined ||
-                      viewingBill.free_giveaway_client !== undefined) && (
-                      <>
-                        <div className="md:col-span-2 lg:col-span-3">
-                          <h4
-                            className={`text-lg font-semibold mb-3 mt-4 ${
-                              isDark ? "text-blue-400" : "text-blue-600"
-                            }`}
-                          >
-                            Channel Partner Information
-                          </h4>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Total Client
-                          </label>
-                          <p
-                            className={`text-sm ${
-                              isDark ? "text-silver-400" : "text-gray-600"
-                            }`}
-                          >
-                            {viewingBill.total_client || "0"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Total Active Client
-                          </label>
-                          <p
-                            className={`text-sm ${
-                              isDark ? "text-silver-400" : "text-gray-600"
-                            }`}
-                          >
-                            {viewingBill.total_active_client || "0"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Previous Total Client
-                          </label>
-                          <p
-                            className={`text-sm ${
-                              isDark ? "text-silver-400" : "text-gray-600"
-                            }`}
-                          >
-                            {viewingBill.previous_total_client || "0"}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Free Giveaway Client
-                          </label>
-                          <p
-                            className={`text-sm ${
-                              isDark ? "text-silver-400" : "text-gray-600"
-                            }`}
-                          >
-                            {viewingBill.free_giveaway_client || "0"}
-                          </p>
-                        </div>
-                      </>
-                    )}
 
                     {/* Dates */}
                     <div className="md:col-span-2 lg:col-span-3">
@@ -7852,72 +7668,6 @@ export default function DataEntry() {
                       </p>
                     </div>
 
-                    {/* Channel Partner Specific Information */}
-                    <div className="md:col-span-2 lg:col-span-3">
-                      <h4
-                        className={`text-lg font-semibold mb-3 mt-4 ${
-                          isDark ? "text-blue-400" : "text-blue-600"
-                        }`}
-                      >
-                        Channel Partner Information
-                      </h4>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Total Client
-                      </label>
-                      <p
-                        className={`text-sm ${
-                          isDark ? "text-silver-400" : "text-gray-600"
-                        }`}
-                      >
-                        {viewingBill.customer_master?.total_client ||
-                          viewingBill.total_client ||
-                          "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Total Active Client
-                      </label>
-                      <p
-                        className={`text-sm ${
-                          isDark ? "text-silver-400" : "text-gray-600"
-                        }`}
-                      >
-                        {viewingBill.customer_master?.total_active_client ||
-                          viewingBill.total_active_client ||
-                          "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Previous Total Client
-                      </label>
-                      <p
-                        className={`text-sm ${
-                          isDark ? "text-silver-400" : "text-gray-600"
-                        }`}
-                      >
-                        {viewingBill.customer_master?.previous_total_client ||
-                          viewingBill.previous_total_client ||
-                          "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Free Giveaway Client
-                      </label>
-                      <p
-                        className={`text-sm ${
-                          isDark ? "text-silver-400" : "text-gray-600"
-                        }`}
-                      >
-                        {viewingBill.customer_master?.free_giveaway_client ||
-                          viewingBill.free_giveaway_client ||
-                          "N/A"}
-                      </p>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Last Bill/Invoice Date

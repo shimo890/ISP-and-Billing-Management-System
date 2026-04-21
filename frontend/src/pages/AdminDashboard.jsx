@@ -203,7 +203,7 @@ export default function Dashboard() {
                   isDark ? "text-silver-400" : "text-gray-600"
                 }`}
               >
-                Bandwidth and Home/SOHO billing overview
+                Bandwidth billing overview
               </p>
             </div>
             <div className="flex items-center space-x-3">

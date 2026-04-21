@@ -8,7 +8,6 @@ import { Search, CheckCircle2, Circle } from "lucide-react";
 
 const CUSTOMER_TYPES = [
   { value: "bw", label: "Bandwidth" },
-  { value: "soho", label: "SOHO/Home" },
 ];
 
 const PAYMENT_METHODS = [

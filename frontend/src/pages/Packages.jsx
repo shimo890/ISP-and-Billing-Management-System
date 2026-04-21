@@ -23,7 +23,6 @@ export default function Packages() {
   const getPackageTypeDisplay = (packageType) => {
     const choices = {
       bw: "Bandwidth",
-      soho: "SOHO/Home",
     };
     return choices[packageType] || packageType || "-";
   };
@@ -400,7 +399,6 @@ export default function Packages() {
                     }`}
                   >
                     <option value="">Select Type</option>
-                    <option value="soho">SOHO/Home</option>
                     <option value="bw">Bandwidth</option>
                   </select>
                   {formErrors.package_type && (
@@ -527,7 +525,6 @@ export default function Packages() {
                     }`}
                   >
                     <option value="">Select Type</option>
-                    <option value="soho">SOHO/Home</option>
                     <option value="bw">Bandwidth</option>
                   </select>
                   {formErrors.package_type && (
@@ -626,7 +623,6 @@ export default function Packages() {
               }`}
             >
               <option value="">All Package Types</option>
-              <option value="soho">SOHO/Home</option>
               <option value="bw">Bandwidth</option>
             </select>
           </div>

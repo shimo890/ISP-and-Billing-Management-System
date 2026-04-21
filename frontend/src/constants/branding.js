@@ -1,8 +1,8 @@
-/** Application identity — ISP billing & customer management (Bandwidth + Home/SOHO). */
+/** Application identity — ISP billing & customer management (Bandwidth). */
 export const APP_TITLE = "ISP Billing & Customer Management";
 export const APP_SHORT_TITLE = "ISP Billing";
 export const APP_DESCRIPTION =
-  "Bandwidth and Home/SOHO subscriber billing, invoicing, and payments.";
+  "Bandwidth subscriber billing, invoicing, and payments.";
 
 /** Shown on invoices, payment slips, and PDFs (configure for your operator). */
 export const COMPANY_LEGAL_NAME = "ISP Billing Services";

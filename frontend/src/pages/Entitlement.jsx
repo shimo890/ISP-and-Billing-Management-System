@@ -6,7 +6,6 @@ import {
   Plus,
   Users,
   Wifi,
-  Home,
   FileText,
   Search,
   Edit2,
@@ -33,7 +32,6 @@ export default function Entitlement() {
   const [selectedCustomerType, setSelectedCustomerType] = useState(null);
   const [customerCounts, setCustomerCounts] = useState({
     bw: 0,
-    soho: 0,
   });
 
   // Bills/Entitlements data - server-side pagination
@@ -64,13 +62,6 @@ export default function Entitlement() {
       color: "blue",
       description: "Internet bandwidth subscribers",
     },
-    {
-      id: "soho",
-      name: "Home/SOHO",
-      icon: Home,
-      color: "purple",
-      description: "Home and SOHO subscribers",
-    },
   ];
 
   // Fetch customer counts on mount
@@ -81,18 +72,16 @@ export default function Entitlement() {
   const fetchCustomerCounts = async () => {
     try {
       const limit = 1;
-      const [bwRes, sohoRes] = await Promise.all([
+      const [bwRes] = await Promise.all([
         billService.getAllBills({ limit, offset: 0, customer_master_id__customer_type: "bw" }),
-        billService.getAllBills({ limit, offset: 0, customer_master_id__customer_type: "soho" }),
       ]);
       const getCount = (r) => (r && typeof r.count === "number" ? r.count : 0);
       setCustomerCounts({
         bw: getCount(bwRes),
-        soho: getCount(sohoRes),
       });
     } catch (err) {
       console.error("Error fetching bill counts:", err);
-      setCustomerCounts({ bw: 0, soho: 0 });
+      setCustomerCounts({ bw: 0 });
     }
   };
 

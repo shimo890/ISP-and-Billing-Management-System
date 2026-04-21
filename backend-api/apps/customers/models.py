@@ -30,11 +30,8 @@ class CustomerMaster(models.Model):
     
     # Customer Types Constants
     CUSTOMER_TYPE_BW = 'bw'
-    CUSTOMER_TYPE_SOHO = 'soho'
-
     CUSTOMER_TYPE_CHOICES = [
         (CUSTOMER_TYPE_BW, 'Bandwidth'),
-        (CUSTOMER_TYPE_SOHO, 'SOHO/Home'),
     ]
     STATUS_CHOICES = [
         ('active', 'Active'),

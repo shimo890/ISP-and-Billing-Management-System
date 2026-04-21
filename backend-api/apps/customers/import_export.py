@@ -48,11 +48,6 @@ class CustomerExporter:
             'kam_id',
             'kam_designation',
             'customer_number',
-            'total_client',
-            'total_active_client',
-            'previous_total_client',
-            'free_giveaway_client',
-            'default_percentage_share',
             'contact_person',
             'status',
             'last_bill_invoice_date',
@@ -78,11 +73,6 @@ class CustomerExporter:
                 customer.kam_id.id if customer.kam_id else '',
                 customer.kam_id.designation if customer.kam_id else '',
                 customer.customer_number,
-                customer.total_client,
-                customer.total_active_client,
-                customer.previous_total_client,
-                customer.free_giveaway_client,
-                customer.default_percentage_share,
                 customer.contact_person or '',
                 customer.status,
                 customer.last_bill_invoice_date or '',
@@ -116,11 +106,6 @@ class CustomerExporter:
                 'kam_id': customer.kam_id.id if customer.kam_id else '',
                 'kam_designation': customer.kam_id.designation if customer.kam_id else '',
                 'customer_number': customer.customer_number,
-                'total_client': customer.total_client,
-                'total_active_client': customer.total_active_client,
-                'previous_total_client': customer.previous_total_client,
-                'free_giveaway_client': customer.free_giveaway_client,
-                'default_percentage_share': float(customer.default_percentage_share),
                 'contact_person': customer.contact_person or '',
                 'status': customer.status,
                 'last_bill_invoice_date': customer.last_bill_invoice_date or '',
@@ -163,19 +148,14 @@ class CustomerExporter:
                 'I': 10,  # kam_id
                 'J': 18,  # kam_designation
                 'K': 18,  # customer_number
-                'L': 12,  # total_client
-                'M': 18,  # total_active_client
-                'N': 20,  # previous_total_client
-                'O': 18,  # free_giveaway_client
-                'P': 20,  # default_percentage_share
-                'Q': 15,  # contact_person
-                'R': 12,  # status
-                'S': 20,  # last_bill_invoice_date
-                'T': 10,  # is_active
-                'U': 20,  # created_at
-                'V': 12,  # created_by
-                'W': 20,  # updated_at
-                'X': 12,  # updated_by
+                'L': 15,  # contact_person
+                'M': 12,  # status
+                'N': 20,  # last_bill_invoice_date
+                'O': 10,  # is_active
+                'P': 20,  # created_at
+                'Q': 12,  # created_by
+                'R': 20,  # updated_at
+                'S': 12,  # updated_by
             }
             
             for col, width in column_widths.items():
@@ -321,11 +301,6 @@ class CustomerImporter:
                         customer_type=row.get('customer_type', '').strip().lower(),
                         kam_id=kam,
                         contact_person=row.get('contact_person', '').strip() or '',
-                        total_client=CustomerImporter.safe_int(row.get('total_client', 0)),
-                        total_active_client=CustomerImporter.safe_int(row.get('total_active_client', 0)),
-                        previous_total_client=CustomerImporter.safe_int(row.get('previous_total_client', 0)),
-                        free_giveaway_client=CustomerImporter.safe_int(row.get('free_giveaway_client', 0)),
-                        default_percentage_share=CustomerImporter.safe_float(row.get('default_percentage_share', 0)),
                         status=row.get('status', 'active').lower(),
                         created_by=CustomerImporter.get_user_by_id(row.get('created_by', '')),
                         updated_by=CustomerImporter.get_user_by_id(row.get('updated_by', '')),
@@ -433,11 +408,6 @@ class CustomerImporter:
                         customer_type=row_data.get('customer_type', '').strip().lower(),
                         kam_id=kam,
                         contact_person=row_data.get('contact_person', '').strip() or '',
-                        total_client=CustomerImporter.safe_int(row_data.get('total_client', 0)),
-                        total_active_client=CustomerImporter.safe_int(row_data.get('total_active_client', 0)),
-                        previous_total_client=CustomerImporter.safe_int(row_data.get('previous_total_client', 0)),
-                        free_giveaway_client=CustomerImporter.safe_int(row_data.get('free_giveaway_client', 0)),
-                        default_percentage_share=CustomerImporter.safe_float(row_data.get('default_percentage_share', 0)),
                         status=row_data.get('status', 'active').lower(),
                         created_by=CustomerImporter.get_user_by_id(row_data.get('created_by', '')),
                         updated_by=CustomerImporter.get_user_by_id(row_data.get('updated_by', '')),

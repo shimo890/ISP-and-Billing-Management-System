@@ -108,7 +108,6 @@ export default function Invoices() {
   const getCustomerTypeDisplay = (type) => {
     const typeLabels = {
       bw: "Bandwidth",
-      soho: "SOHO/Home"
     };
     return typeLabels[type] || type || "N/A";
   };
@@ -157,7 +156,6 @@ return (
             options={[
               { value: "", label: "All Types" },
               { value: "bw", label: "Bandwidth" },
-              { value: "soho", label: "SOHO/Home" }
             ]}
             value={filters.customer_type}
             onChange={(value) => handleFilterChange('customer_type', value)}
@@ -319,14 +317,8 @@ return (
                         {invoice.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => navigate(`/invoice-edit/${invoice.id}`, { state: { invoice } })}
-                        className="text-gold-600 hover:text-gold-700 mr-2"
-                        title="Edit"
-                      >
-                        Edit
-                      </button>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400" onClick={(e) => e.stopPropagation()}>
+                      —
                     </td>
                   </tr>
                   );

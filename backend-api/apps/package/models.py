@@ -5,7 +5,6 @@ class PackageMaster(models.Model):
     """Package Master - Defines available packages"""
     PACKAGE_TYPE_CHOICES = [
         ('bw', 'Bandwidth'),
-        ('soho', 'SOHO/Home'),
     ]
 
     id = models.AutoField(primary_key=True)

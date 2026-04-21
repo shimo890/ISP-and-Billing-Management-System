@@ -2,15 +2,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Download, Printer, Share2 } from 'lucide-react';
-import { COMPANY_LEGAL_NAME } from '../constants/branding';
+import { Download, Printer } from 'lucide-react';
 
 const PaymentView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const payment = location.state?.payment;
   const paymentRef = useRef();
-  const [showShare, setShowShare] = useState(false);
 
   if (!payment) {
     return (
@@ -55,57 +53,6 @@ const PaymentView = () => {
     pdf.save(`payment-${payment.id}.pdf`);
   };
 
-  const handleShareEmail = () => {
-    const subject = `Payment ${payment.id}`;
-    const body = `Dear Customer,\n\nPlease find your payment details.\n\nPayment ID: ${payment.id}\nTotal Amount: ${payment.total_paid} BDT\n\nRegards,\n${COMPANY_LEGAL_NAME}`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
-  const handleShareWhatsApp = async () => {
-    const canvas = await html2canvas(paymentRef.current, {
-      useCORS: true,
-      allowTaint: true
-    });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF();
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 30;
-    pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-    const pdfBlob = pdf.output('blob');
-    const file = new File([pdfBlob], `payment-${payment.id}.pdf`, { type: 'application/pdf' });
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Payment ${payment.id}`,
-          text: `Payment ${payment.id}\nTotal: ${payment.total_paid} BDT\nFrom ${COMPANY_LEGAL_NAME}`,
-          files: [file]
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-        // Fallback to download
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `payment-${payment.id}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    } else {
-      // Fallback to download
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `payment-${payment.id}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
 
   return (
     <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
@@ -146,15 +93,6 @@ const PaymentView = () => {
             </svg>
             Back to Payments
           </button>
-          <button
-            onClick={() => navigate(`/payment-edit/${payment.id}`, { state: { payment } })}
-            className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit Payment
-          </button>
           </div>
           <div className="flex space-x-2">
             <button
@@ -164,21 +102,6 @@ const PaymentView = () => {
               <Download className="w-4 h-4 mr-2" />
               Download PDF
             </button>
-            <div className="relative">
-              <button
-                onClick={() => setShowShare(!showShare)}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </button>
-              {showShare && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10">
-                  <button onClick={() => { handleShareEmail(); setShowShare(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Email</button>
-                  <button onClick={() => { handleShareWhatsApp(); setShowShare(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">WhatsApp</button>
-                </div>
-              )}
-            </div>
             <button
               onClick={handlePrint}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"

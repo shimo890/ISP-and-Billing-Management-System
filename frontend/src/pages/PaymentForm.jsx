@@ -8,7 +8,6 @@ import api from "../services/api";
 
 const CUSTOMER_TYPES = [
   { value: "bw", label: "Bandwidth" },
-  { value: "soho", label: "SOHO/Home" },
 ];
 
 const PAYMENT_METHODS = [
@@ -16,7 +15,6 @@ const PAYMENT_METHODS = [
   { value: "Bkash", label: "Bkash" },
   { value: "Bank Transfer", label: "Bank Transfer" },
   { value: "Commission (Adjustment)", label: "Commission (Adjustment)" },
-  { value: "Credit Balance (Adjustment/Overpayment)", label: "Credit Balance (Customer Adjustment/Overpayment)" },
 ];
 
 /** Format date as "January 2025" for clear month display */
@@ -46,7 +44,6 @@ export default function PaymentForm() {
   const [adjustmentTransferAmount, setAdjustmentTransferAmount] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [customerCreditBalance, setCustomerCreditBalance] = useState(0);
 
   // Loading states
   const [loadingCustomers, setLoadingCustomers] = useState(false);
@@ -70,7 +67,6 @@ export default function PaymentForm() {
   const adjAmt = adjustmentTransferEnabled ? (parseFloat(adjustmentTransferAmount) || 0) : 0;
   const invoicePaymentAmount = amt - adjAmt;
   const balance = amount ? totalSelectedAmount - invoicePaymentAmount : 0;
-  const isCreditBalance = (paymentMethod || "").startsWith("Credit Balance");
 
 
   // Fetch customers when customer type changes
@@ -94,14 +90,9 @@ export default function PaymentForm() {
     if (selectedCustomer) {
       fetchUnpaidInvoicesByCustomer(selectedCustomer);
       setSelectedInvoices([]);
-      // Fetch customer credit balance
-      api.get(`/customers/${selectedCustomer}/credit-balance/`).then((data) => {
-        setCustomerCreditBalance(data.credit_balance ?? 0);
-      }).catch(() => setCustomerCreditBalance(0));
     } else {
       setInvoices([]);
       setSelectedInvoices([]);
-      setCustomerCreditBalance(0);
     }
   }, [selectedCustomer]);
 
@@ -190,12 +181,8 @@ export default function PaymentForm() {
       setError("Please select invoices, payment method, and enter amount.");
       return;
     }
-    if (!isCreditBalance && !transactionId) {
+    if (!transactionId) {
       setError("Transaction ID is required for cash/bank payments.");
-      return;
-    }
-    if (isCreditBalance && parseFloat(amount) > customerCreditBalance) {
-      setError(`Amount exceeds customer credit balance (${customerCreditBalance.toFixed(2)} BDT).`);
       return;
     }
 
@@ -215,7 +202,6 @@ export default function PaymentForm() {
       return;
     }
 
-    // Overpayment allowed: excess stored as customer credit; use Fund Transfer to move it to another account
     setSubmitting(true);
     try {
       // Create payment - backend handles both master and details creation
@@ -237,7 +223,7 @@ export default function PaymentForm() {
         customer_entitlement_master_id: parseInt(entitlementId),
         pay_amount: totalAmount,
         adjustment_transfer_amount: adjTransfer,
-        transaction_id: isCreditBalance ? "" : transactionId.trim(),
+        transaction_id: transactionId.trim(),
         remarks: remarks.trim(),
       };
 
@@ -549,18 +535,6 @@ export default function PaymentForm() {
               />
             </div>
 
-            {/* Customer Credit Balance - shown when Credit Balance selected */}
-            {isCreditBalance && selectedCustomer && (
-              <div className={`p-3 rounded-lg ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
-                <p className={`text-sm font-medium ${isDark ? "text-green-300" : "text-green-800"}`}>
-                  Customer Credit Balance: {new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT" }).format(customerCreditBalance)}
-                </p>
-                <p className={`text-xs mt-1 ${isDark ? "text-green-400" : "text-green-600"}`}>
-                  Amount will be deducted from customer&apos;s advance/overpayment.
-                </p>
-              </div>
-            )}
-
             {/* Amount */}
             <div>
               <label className={labelClass}>
@@ -581,15 +555,11 @@ export default function PaymentForm() {
                 required
               />
               <p className={`mt-1 text-xs ${isDark ? "text-silver-400" : "text-gray-500"}`}>
-                {isCreditBalance
-                  ? "Use customer credit to pay selected invoice(s)."
-                  : "Overpayment allowed. Excess is stored as customer credit and can be transferred via Fund Transfer."}
+                Overpayment is allowed. The excess amount is recorded as customer deposit.
               </p>
             </div>
 
-            {/* Adjustment Transfer - only for cash/bank payments (shown always so users see the option) */}
-            {!isCreditBalance && (
-              <div className={`p-4 rounded-lg border ${isDark ? "border-gray-600 bg-gray-700/50" : "border-gray-300 bg-gray-50"}`}>
+            <div className={`p-4 rounded-lg border ${isDark ? "border-gray-600 bg-gray-700/50" : "border-gray-300 bg-gray-50"}`}>
                 <div className="flex items-center gap-3 mb-3">
                   <input
                     type="checkbox"
@@ -602,7 +572,7 @@ export default function PaymentForm() {
                     className="w-4 h-4 text-blue-600 rounded border-gray-300"
                   />
                   <label htmlFor="adjustment-transfer-enable" className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                    Adjustment Transfer – transfer part to customer&apos;s credit balance (deposit)
+                    Adjustment Transfer - move part to customer deposit
                   </label>
                 </div>
                 {adjustmentTransferEnabled && (
@@ -638,7 +608,7 @@ export default function PaymentForm() {
                         </p>
                         {adjAmt > 0 && (
                           <p className={`mt-1 text-xs ${isDark ? "text-green-400" : "text-green-600"}`}>
-                            {adjAmt.toLocaleString("en-BD", { minimumFractionDigits: 2 })} BDT will be added to customer&apos;s credit balance.
+                            {adjAmt.toLocaleString("en-BD", { minimumFractionDigits: 2 })} BDT will be added to customer deposit.
                           </p>
                         )}
                       </div>
@@ -646,11 +616,8 @@ export default function PaymentForm() {
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Transaction ID - optional when Credit Balance */}
-            {!isCreditBalance && (
-              <div>
+            <div>
                 <label className={labelClass}>
                   Transaction ID <span className="text-red-500">*</span>
                 </label>
@@ -663,7 +630,6 @@ export default function PaymentForm() {
                   required
                 />
               </div>
-            )}
 
             {/* Remarks */}
             <div>

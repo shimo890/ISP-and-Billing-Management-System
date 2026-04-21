@@ -281,14 +281,8 @@ export default function Payments() {
                           {payment.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => navigate(`/payment-edit/${payment.id}`, { state: { payment } })}
-                          className="text-gold-600 hover:text-gold-700 mr-2"
-                          title="Edit"
-                        >
-                          Edit
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400" onClick={(e) => e.stopPropagation()}>
+                        —
                       </td>
                     </tr>
                     );
