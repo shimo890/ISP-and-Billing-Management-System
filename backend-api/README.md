@@ -1,6 +1,6 @@
 # Sales Dashboard API (Django)
 
-A JWT-secured backend for authentication, RBAC, customers, prospects, bills, and dynamic menus.
+A JWT-secured backend for authentication, RBAC, customers, prospects, bills, audit logs, and dynamic menus.
 
 ## Stack
 - Django 5 + DRF
@@ -9,7 +9,7 @@ A JWT-secured backend for authentication, RBAC, customers, prospects, bills, and
 
 ## Quick start
 ```bash
-cd /home/shamimkhaled/sales-dashboard-app/backend-api
+cd /home/shimo/sales-dashboard-app/backend-api
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
@@ -21,8 +21,8 @@ python manage.py runserver
 Docs: Swagger at http://localhost:8000/api/docs/ (Redoc at /api/redoc/)
 
 ## Apps
-- apps/authentication: roles, permissions, menu, and auth endpoints
-- apps/users: custom user model and /api/users/me
+- apps/authentication: roles, permissions, menu, auth endpoints, activity/audit
+- apps/users: custom user model (email login) and /api/users/me
 - apps/customers: customers, prospects, follow-ups, attachments; import/export, revenue calc
 - apps/bills: BillRecord (Node.js-compatible schema), import/export
 
